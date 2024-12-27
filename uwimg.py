@@ -15,8 +15,7 @@ class IMAGE(Structure):
                 ("data", POINTER(c_float))]
 
 
-#lib = CDLL("/home/pjreddie/documents/455/libuwimg.so", RTLD_GLOBAL)
-#lib = CDLL("libuwimg.so", RTLD_GLOBAL)
+
 lib = CDLL(os.path.join(os.path.dirname(__file__), "libuwimg.so"), RTLD_GLOBAL)
 
 make_image = lib.make_image
