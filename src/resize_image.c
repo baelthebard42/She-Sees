@@ -1,7 +1,8 @@
 #include <math.h>
 #include "image.h"
-#include "process_image.c"
 #include <string.h>
+#include <assert.h>
+#include <stdlib.h>
 
 float rectangle_area_from_diag(float x1, float y1, float x2, float y2)
 {
@@ -11,18 +12,21 @@ float rectangle_area_from_diag(float x1, float y1, float x2, float y2)
 float nn_interpolate(image im, float x, float y, int c)
 {
     assert(x >= 0 && x < im.w && y >= 0 && y < im.h);
-    return get_pixel(im, round(x), round(y), c);
+    int roundx = round(x), roundy = round(y);
+
+    return get_pixel(im, roundx < im.w ? roundx : im.w - 1, roundy < im.h ? roundy : im.h - 1, c);
 }
 
 float bilinear_interpolate(image im, float x, float y, int c)
 {
     assert(x >= 0 && x < im.w && y >= 0 && y < im.h);
     int close_neighbor_x[4], close_neighbor_y[4];
+    int hold1 = (int)x + 1, hold2 = (int)y + 1;
 
     close_neighbor_x[0] = (int)x, close_neighbor_y[0] = (int)y;
-    close_neighbor_x[1] = (int)x + 1, close_neighbor_y[1] = (int)y;
-    close_neighbor_x[2] = (int)x, close_neighbor_y[2] = (int)y + 1;
-    close_neighbor_x[3] = (int)x + 1, close_neighbor_y[3] = (int)y + 1;
+    close_neighbor_x[1] = hold1 < im.w ? hold1 : im.w - 1, close_neighbor_y[1] = (int)y;
+    close_neighbor_x[2] = (int)x, close_neighbor_y[2] = hold2 < im.h ? hold2 : im.h - 1;
+    close_neighbor_x[3] = hold1 < im.w ? hold1 : im.w - 1, close_neighbor_y[3] = hold2 < im.h ? hold2 : im.h - 1;
 
     float areas[4], total_area = rectangle_area_from_diag(close_neighbor_x[0], close_neighbor_y[0], close_neighbor_x[3], close_neighbor_y[3]);
     float result_pixel = 0;
@@ -36,10 +40,10 @@ float bilinear_interpolate(image im, float x, float y, int c)
     return result_pixel;
 }
 
-image resize(image im, int w, int h, char interpolation)
+image bilinear_resize(image im, int w, int h)
 {
 
-    assert(w > 0 && h > 0 && (strcmp(interpolation, "b") == 0 || strcmp(interpolation, "n") == 0));
+    assert(w > 0 && h > 0);
 
     image resized_image = make_image(w, h, im.c);
 
@@ -59,15 +63,42 @@ image resize(image im, int w, int h, char interpolation)
 
             for (int ch = 0; ch < resized_image.c; ++ch)
             {
-                if (strcmp(interpolation, "b") == 0)
-                {
-                    predicted_pixel = bilinear_interpolate(im, old_coord_x, old_coord_y, ch);
-                }
 
-                else
-                {
-                    predicted_pixel = nn_interpolate(im, old_coord_x, old_coord_y, ch);
-                }
+                predicted_pixel = bilinear_interpolate(im, old_coord_x, old_coord_y, ch);
+
+                set_pixel(resized_image, i, j, ch, predicted_pixel);
+            }
+        }
+    }
+
+    return resized_image;
+}
+
+image nn_resize(image im, int w, int h)
+{
+
+    assert(w > 0 && h > 0);
+
+    image resized_image = make_image(w, h, im.c);
+
+    float new_to_old_ratio_w = (float)resized_image.w / im.w;
+    float new_to_old_ratio_h = (float)resized_image.h / im.h;
+    float predicted_pixel;
+
+    resized_image.data = (float *)(malloc(resized_image.c * resized_image.w * resized_image.h * sizeof(float)));
+
+    for (int i = 0; i < resized_image.w; ++i)
+    {
+        for (int j = 0; j < resized_image.h; ++j)
+        {
+
+            float old_coord_x = i / new_to_old_ratio_w;
+            float old_coord_y = j / new_to_old_ratio_h;
+
+            for (int ch = 0; ch < resized_image.c; ++ch)
+            {
+
+                predicted_pixel = nn_interpolate(im, old_coord_x, old_coord_y, ch);
 
                 set_pixel(resized_image, i, j, ch, predicted_pixel);
             }

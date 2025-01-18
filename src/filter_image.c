@@ -150,7 +150,6 @@ image make_emboss_filter()
 image make_gaussian_filter(float sigma)
 {
     int filter_size = 2 * (int)ceil(3 * sigma) + 1;
-    int num_elements = filter_size * filter_size;
 
     image gf = make_image(filter_size, filter_size, 1);
 
@@ -257,8 +256,8 @@ image *sobel_image(image im)
 {
     image *mag_dir = calloc(2, sizeof(image));
     float x, y;
-    mag_dir[0] = make_image(im.w, im.h, 0);
-    mag_dir[1] = make_image(im.w, im.h, 0);
+    mag_dir[0] = make_image(im.w, im.h, 1);
+    mag_dir[1] = make_image(im.w, im.h, 1);
 
     image gx_filter = make_gx_filter();
     image gy_filter = make_gy_filter();

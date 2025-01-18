@@ -2,8 +2,8 @@ OPENCV=0
 OPENMP=0
 DEBUG=0
 
-OBJ=load_image.o process_image.o args.o
-EXOBJ=test.o
+OBJ=load_image.o process_image.o args.o filter_image.o resize_image.o test.o
+EXOBJ=main.o
 
 VPATH=./src/:./
 SLIB=libuwimg.so
@@ -26,6 +26,8 @@ endif
 ifeq ($(DEBUG), 1) 
 OPTS=-O0 -g
 COMMON= -Iinclude/ -Isrc/ 
+else
+CFLAGS+= -flto
 endif
 
 CFLAGS+=$(OPTS)
@@ -64,4 +66,3 @@ obj:
 
 clean:
 	rm -rf $(OBJS) $(SLIB) $(ALIB) $(EXEC) $(EXOBJS) $(OBJDIR)/*
-

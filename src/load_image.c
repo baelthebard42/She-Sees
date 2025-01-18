@@ -21,15 +21,14 @@ image make_image(int w, int h, int c)
     return out;
 }
 
-#define STB_IMAGE_IMPLEMENTATION // without this, only the prototypes of the functions of stb_image are included. This brings in function def too
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-void save_image_stb(image im, const char *name)
+void save_image_stb(image im, const char *name, int png)
 {
     char buff[256];
-    sprintf(buff, "%s.jpg", name);
     unsigned char *data = calloc(im.w * im.h * im.c, sizeof(char));
     int i, k;
     for (k = 0; k < im.c; ++k)
@@ -39,18 +38,37 @@ void save_image_stb(image im, const char *name)
             data[i * im.c + k] = (unsigned char)roundf((255 * im.data[i + k * im.w * im.h]));
         }
     }
-
-    int success = stbi_write_jpg(buff, im.w, im.h, im.c, data, 100);
+    int success = 0;
+    if (png)
+    {
+        sprintf(buff, "%s.png", name);
+        success = stbi_write_png(buff, im.w, im.h, im.c, data, im.w * im.c);
+    }
+    else
+    {
+        sprintf(buff, "%s.jpg", name);
+        success = stbi_write_jpg(buff, im.w, im.h, im.c, data, 100);
+    }
     free(data);
     if (!success)
         fprintf(stderr, "Failed to write image %s\n", buff);
 }
 
-void save_image(image im, const char *name)
+void save_png(image im, const char *name)
 {
-    save_image_stb(im, name);
+    save_image_stb(im, name, 1);
 }
 
+void save_image(image im, const char *name)
+{
+    save_image_stb(im, name, 0);
+}
+
+//
+// Load an image using stb
+// channels = [0..4]
+// channels > 0 forces the image to have that many channels
+//
 image load_image_stb(char *filename, int channels)
 {
     int w, h, c;
