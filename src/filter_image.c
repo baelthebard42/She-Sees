@@ -8,7 +8,7 @@
 
 float gaussian(float x, float y, float sigma)
 {
-    return (1 / (TWOPI * sigma * sigma)) * exp(-((x * x + y * y) / 2 * (sigma * sigma)));
+    return (1 / (TWOPI * sigma * sigma)) * exp(-((x * x + y * y) / (2 * (sigma * sigma))));
 }
 
 void l1_normalize(image im)
@@ -190,7 +190,8 @@ image sub_image(image a, image b)
     for (int i = 0; i < diff.h * diff.w * diff.c; ++i)
     {
         diffpix = a.data[i] - b.data[i];
-        diff.data[i] = diffpix >= 0 ? diffpix : 0;
+        // diff.data[i] = diffpix >= 0 ? diffpix : 0; no good
+        diff.data[i] = diffpix;
     }
 
     return diff;
@@ -283,7 +284,7 @@ image *sobel_image(image im)
 image colorize_sobel(image im)
 {
     image *mag_and_direct = sobel_image(im);
-    image colorize_sobel = make_image(im.w, im.h, im.c);
+    image colorize_sobel_ = make_image(im.w, im.h, im.c);
     feature_normalize(mag_and_direct[0]);
     feature_normalize(mag_and_direct[1]);
     float S, V, H;
@@ -294,11 +295,11 @@ image colorize_sobel(image im)
             S = get_pixel(mag_and_direct[0], w, h, 0);
             V = get_pixel(mag_and_direct[0], w, h, 0);
             H = get_pixel(mag_and_direct[1], w, h, 0);
-            set_pixel(colorize_sobel, w, h, 0, H);
-            set_pixel(colorize_sobel, w, h, 1, S);
-            set_pixel(colorize_sobel, w, h, 2, V);
+            set_pixel(colorize_sobel_, w, h, 0, H);
+            set_pixel(colorize_sobel_, w, h, 1, S);
+            set_pixel(colorize_sobel_, w, h, 2, V);
         }
     }
-    hsv_to_rgb(colorize_sobel);
-    return colorize_sobel;
+    hsv_to_rgb(colorize_sobel_);
+    return colorize_sobel_;
 }
