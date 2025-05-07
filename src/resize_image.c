@@ -23,6 +23,7 @@ float bilinear_interpolate(image im, float x, float y, int c)
 
     /* apparently doing interpolation from area isn't cool. implemented using length below
 
+    area implementation:
     int close_neighbor_x[4], close_neighbor_y[4];
 
      close_neighbor_x[0] = (int)x, close_neighbor_y[0] = (int)y;
@@ -40,6 +41,8 @@ float bilinear_interpolate(image im, float x, float y, int c)
      }
 
      return result_pixel;*/
+
+    // length implementation:
 
     int x0 = (int)floor(x);
     int y0 = (int)floor(y);
@@ -116,7 +119,7 @@ image nn_resize(image im, int w, int h)
         for (int j = 0; j < resized_image.h; ++j)
         {
 
-            float old_coord_x = i / new_to_old_ratio_w;
+            float old_coord_x = i / new_to_old_ratio_w; // corresponding decimal form of the same old coord
             float old_coord_y = j / new_to_old_ratio_h;
 
             for (int ch = 0; ch < resized_image.c; ++ch)
