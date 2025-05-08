@@ -285,6 +285,22 @@ image nms_image(image im, int w)
     return r;
 }
 
+int countResponses(image rNMS)
+{
+    int num_corners = 0;
+
+    for (int i = 0; i < rNMS.w; ++i)
+    {
+        for (int j = 0; j < rNMS.h; ++j)
+        {
+            if (get_pixel(rNMS, i, j, 0) != -9999999)
+                ++num_corners;
+        }
+    }
+
+    return num_corners;
+}
+
 // Perform harris corner detection and extract features from the corners.
 // image im: input image.
 // float sigma: std. dev for harris.
@@ -301,12 +317,22 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
 
     image Rnms = nms_image(R, nms); // done
 
-    // TODO: count number of responses over threshold
-    int count = 1; // change this
+    int count = countResponses(Rnms);
 
-    *n = count; // <- set *n equal to number of corners in image.
+    *n = count;
     descriptor *d = calloc(count, sizeof(descriptor));
-    // TODO: fill in array *d with descriptors of corners, use describe_index.
+
+    int idx_desc = 0;
+    for (int i = 0; i < Rnms.w; ++i)
+    {
+        for (int j = 0; j < Rnms.h; ++j)
+        {
+            if (get_pixel(Rnms, i, j, 0) != -9999999)
+            {
+                d[idx_desc++] = describe_index(im, j * Rnms.w + i);
+            }
+        }
+    }
 
     free_image(S);
     free_image(R);
