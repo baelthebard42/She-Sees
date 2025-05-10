@@ -34,9 +34,7 @@ descriptor describe_index(image im, int i)
     d.n = w * w * im.c;
     int c, dx, dy;
     int count = 0;
-    // If you want you can experiment with other descriptors
-    // This subtracts the central value from neighbors
-    // to compensate some for exposure/lighting changes.
+
     for (c = 0; c < im.c; ++c)
     {
         float cval = im.data[c * im.w * im.h + i];
@@ -69,11 +67,6 @@ void mark_spot(image im, point p)
         set_pixel(im, x + i, y, 2, 1);
         set_pixel(im, x, y + i, 2, 1);
     }
-}
-
-float gaussian(float x, float y, float sigma)
-{
-    return (1 / (TWOPI * sigma * sigma)) * exp(-((x * x + y * y) / (2 * (sigma * sigma))));
 }
 
 // Marks corners denoted by an array of descriptors.

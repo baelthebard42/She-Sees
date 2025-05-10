@@ -8,6 +8,11 @@
 
 // you dont want to change this file
 
+float gaussian(float x, float y, float sigma)
+{
+    return (1 / (TWOPI * sigma * sigma)) * exp(-((x * x + y * y) / (2 * (sigma * sigma))));
+}
+
 typedef struct
 {
     int w, h, c;
