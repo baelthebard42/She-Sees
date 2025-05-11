@@ -226,10 +226,19 @@ point project_point(matrix H, point p)
 {
     matrix c = make_matrix(3, 1);
 
-    // TODO: project point p with homography H.
-    // Remember that homogeneous coordinates are equivalent up to scalar.
-    // Have to divide by.... something...
-    point q = make_point(0, 0);
+    c.data[0][0] = p.x; // representing the point in matirx form
+    c.data[1][0] = p.y;
+    c.data[2][0] = 1;
+    matrix result = matrix_mult_matrix(H, c);
+
+    float factor = result.data[2][0]; // this represent the w values
+
+    if (factor == 0)
+    {
+        return make_point(0, 0);
+    }
+
+    point q = make_point(result.data[0][0] / factor, result.data[1][0] / factor);
     return q;
 }
 
@@ -239,6 +248,14 @@ point project_point(matrix H, point p)
 float point_distance(point p, point q)
 {
     return sqrt(powf(p.x - q.x, 2) + powf(p.y - q.y, 2));
+}
+
+void swap(void *a, void *b, size_t size)
+{
+    unsigned char temp[size];
+    memcpy(temp, a, size);
+    memcpy(a, b, size);
+    memcpy(b, temp, size);
 }
 
 // Count number of inliers in a set of matches. Should also bring inliers
@@ -252,12 +269,20 @@ float point_distance(point p, point q)
 //          so that the inliers are first in the array. For drawing.
 int model_inliers(matrix H, match *m, int n, float thresh)
 {
-    int i;
     int count = 0;
-    // TODO: count number of matches that are inliers
-    // i.e. distance(H*p, q) < thresh
-    // Also, sort the matches m so the inliers are the first 'count' elements.
+
+    for (int i = 0; i < n; ++i)
+    {
+        if (point_distance(project_point(H, m[i].p), m[i].q) < thresh)
+            swap(&m[i], &m[count++], sizeof(match)); // we also need to sort. this effectively sorts the list such that inliers will be ahead of outliers
+    }
     return count;
+}
+
+int get_random_number(int min, int max)
+{
+
+    return rand() % (max - min + 1) + min;
 }
 
 // Randomly shuffle matches for RANSAC.
@@ -265,7 +290,10 @@ int model_inliers(matrix H, match *m, int n, float thresh)
 // int n: number of elements in matches.
 void randomize_matches(match *m, int n)
 {
-    // TODO: implement Fisher-Yates to shuffle the array.
+    for (int i = n - 1; i > 0; i--)
+    {
+        swap(&m[i], &m[get_random_number(0, i)], sizeof(match));
+    }
 }
 
 // Computes homography between two images given matching pixels.
@@ -284,20 +312,46 @@ matrix compute_homography(match *matches, int n)
         double xp = matches[i].q.x;
         double y = matches[i].p.y;
         double yp = matches[i].q.y;
-        // TODO: fill in the matrices M and b.
+
+        // this is based on equations of modeling the projection in form of M*a=b
+        M.data[2 * i][0] = x;
+        M.data[2 * i][1] = y;
+        M.data[2 * i][2] = 1;
+        M.data[2 * i][3] = 0;
+        M.data[2 * i][4] = 0;
+        M.data[2 * i][5] = 0;
+        M.data[2 * i][6] = -x * xp;
+        M.data[2 * i][7] = -y * xp;
+        b.data[2 * i][0] = xp;
+
+        M.data[2 * i + 1][0] = 0;
+        M.data[2 * i + 1][1] = 0;
+        M.data[2 * i + 1][2] = 0;
+        M.data[2 * i + 1][3] = x;
+        M.data[2 * i + 1][4] = y;
+        M.data[2 * i + 1][5] = 1;
+        M.data[2 * i + 1][6] = -x * yp;
+        M.data[2 * i + 1][7] = -y * yp;
+        b.data[2 * i + 1][0] = yp;
     }
     matrix a = solve_system(M, b);
     free_matrix(M);
     free_matrix(b);
 
-    // If a solution can't be found, return empty matrix;
-    matrix none = {0};
+    matrix none = {0}; // if a solution can't be found, return empty matrix;
     if (!a.data)
         return none;
 
     matrix H = make_matrix(3, 3);
-    // TODO: fill in the homography H based on the result in a.
+    int counter = 0;
 
+    for (int i = 0; i < H.rows; ++i)
+    {
+        for (int j = 0; j < H.cols; ++j)
+        {
+            H.data[i][j] = a.data[counter++][0];
+        }
+    }
     free_matrix(a);
     return H;
 }
@@ -314,16 +368,38 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
     int e;
     int best = 0;
     matrix Hb = make_translation_homography(256, 0);
-    // TODO: fill in RANSAC algorithm.
-    // for k iterations:
-    //     shuffle the matches
-    //     compute a homography with a few matches (how many??)
-    //     if new homography is better than old (how can you tell?):
-    //         compute updated homography using all inliers
-    //         remember it and how good it is
-    //         if it's better than the cutoff:
-    //             return it immediately
-    // if we get to the end return the best homography
+
+    int num_points_to_fit = 4; // rule of thumb for fitting homography matrices
+
+    for (int i = 0; i < k; ++i)
+    {
+        randomize_matches(m, n);
+
+        match *m_sliced = calloc(num_points_to_fit, sizeof(match));
+
+        for (int j = 0; j < num_points_to_fit; ++j)
+        {
+            m_sliced[j] = m[j];
+        }
+
+        matrix predicted_homography = compute_homography(m_sliced, num_points_to_fit);
+        int num_inliers = model_inliers(predicted_homography, m, n, thresh);
+
+        if (num_inliers > best)
+        {
+
+            if (num_inliers > cutoff)
+            {
+                free(m_sliced);
+                return predicted_homography;
+            }
+
+            best = num_inliers;
+            free_matrix(Hb);
+            Hb = copy_matrix(predicted_homography);
+        }
+    }
+
     return Hb;
 }
 
@@ -427,15 +503,4 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
     // Stitch the images together with the homography
     image comb = combine_images(a, b, H);
     return comb;
-}
-
-// Project an image onto a cylinder.
-// image im: image to project.
-// float f: focal length used to take image (in pixels).
-// returns: image projected onto cylinder, then flattened.
-image cylindrical_project(image im, float f)
-{
-    // TODO: project image onto a cylinder
-    image c = copy_image(im);
-    return c;
 }

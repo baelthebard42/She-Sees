@@ -1,11 +1,13 @@
 #ifndef MATRIX_H
 #define MATRIX_H
-typedef struct matrix{
+typedef struct matrix
+{
     int rows, cols;
     double **data;
 } matrix;
 
-typedef struct LUP{
+typedef struct LUP
+{
     matrix *L;
     matrix *U;
     int *P;
@@ -17,6 +19,7 @@ matrix make_translation_homography(float dx, float dy);
 
 void free_matrix(matrix m);
 matrix make_matrix(int rows, int cols);
+matrix copy_matrix(matrix m);
 double *sle_solve(matrix A, double *b);
 matrix matrix_mult_matrix(matrix a, matrix b);
 void print_matrix(matrix m);
