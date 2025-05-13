@@ -8,6 +8,8 @@ libuwimg*
 uwimg
 *.png
 *.jpg
+vs_code/
+__pycache__/
 
 # OS Generated #
 .DS_Store*
@@ -15,3 +17,4 @@ ehthumbs.db
 Icon?
 Thumbs.db
 *.swp
+

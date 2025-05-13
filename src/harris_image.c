@@ -7,6 +7,8 @@
 #include "matrix.h"
 #include <time.h>
 
+#define INVALID_CORNER -999999
+
 // Frees an array of descriptors.
 // descriptor *d: the array.
 // int n: number of elements in array.
@@ -96,11 +98,11 @@ image make_1d_gaussian(float sigma, int row)
 
     if (row)
     {
-        image gauss_1d = make_image(filter_size, 1, 1);
+        gauss_1d = make_image(filter_size, 1, 1);
     }
     else
     {
-        image gauss_1d = make_image(1, filter_size, 1);
+        gauss_1d = make_image(1, filter_size, 1);
     }
 
     for (int i = 0; i < filter_size; ++i)
@@ -247,7 +249,7 @@ int checkNeighbourPixels(image im, int i, int j, int w)
 
             if (get_pixel(im, k, l, 0) > center)
             {
-                return -9999999;
+                return INVALID_CORNER;
             }
         }
     }
@@ -286,7 +288,7 @@ int countResponses(image rNMS)
     {
         for (int j = 0; j < rNMS.h; ++j)
         {
-            if (get_pixel(rNMS, i, j, 0) != -9999999)
+            if (get_pixel(rNMS, i, j, 0) != INVALID_CORNER)
                 ++num_corners;
         }
     }
@@ -307,8 +309,23 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
     image S = structure_matrix(im, sigma); // done.
 
     image R = cornerness_response(S); // done. actually here we are supposed to calculate eigen values but we have settled with their approximations instead
+    save_image(R, "cornerness_raw_before_low_marked");
+
+    for (int i = 0; i < R.w; ++i)
+    {
+        for (int j = 0; j < R.h; ++j)
+        {
+            float val = get_pixel(R, i, j, 0);
+            if (val < thresh)
+            {
+                set_pixel(R, i, j, 0, INVALID_CORNER);
+            }
+        }
+    }
+    save_image(R, "cornerness_raw_after_low_marked");
 
     image Rnms = nms_image(R, nms); // done
+    save_image(Rnms, "cornerness_nms");
 
     int count = countResponses(Rnms);
 
@@ -320,7 +337,7 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
     {
         for (int j = 0; j < Rnms.h; ++j)
         {
-            if (get_pixel(Rnms, i, j, 0) != -9999999)
+            if (get_pixel(Rnms, i, j, 0) != INVALID_CORNER)
             {
                 d[idx_desc++] = describe_index(im, j * Rnms.w + i);
             }

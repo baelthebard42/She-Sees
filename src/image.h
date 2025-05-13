@@ -2,13 +2,14 @@
 #define IMAGE_H
 #include "matrix.h"
 #define TWOPI 6.2831853
+#include <math.h>
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 // you dont want to change this file
 
-float gaussian(float x, float y, float sigma)
+static float gaussian(float x, float y, float sigma)
 {
     return (1 / (TWOPI * sigma * sigma)) * exp(-((x * x + y * y) / (2 * (sigma * sigma))));
 }
@@ -97,7 +98,7 @@ image smooth_image(image im, float sigma, int use_1d_gauss);
 image structure_matrix(image im, float sigma);
 image cornerness_response(image S);
 void free_descriptors(descriptor *d, int n);
-image cylindrical_project(image im, float f);
+// image cylindrical_project(image im, float f);
 void mark_corners(image im, descriptor *d, int n);
 image find_and_draw_matches(image a, image b, float sigma, float thresh, int nms);
 void detect_and_draw_corners(image im, float sigma, float thresh, int nms);

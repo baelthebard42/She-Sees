@@ -6,11 +6,6 @@
 #include "image.h"
 #define TWOPI 6.2831853
 
-float gaussian(float x, float y, float sigma)
-{
-    return (1 / (TWOPI * sigma * sigma)) * exp(-((x * x + y * y) / (2 * (sigma * sigma))));
-}
-
 void l1_normalize(image im)
 {
 

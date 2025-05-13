@@ -46,7 +46,7 @@ def field_panorama():
     im7 = load_image("data/field7.jpg")
     im8 = load_image("data/field8.jpg")
 
-    im1 = cylindrical_project(im1, 1200)
+    ''' im1 = cylindrical_project(im1, 1200)
     im2 = cylindrical_project(im2, 1200)
     im3 = cylindrical_project(im3, 1200)
     im4 = cylindrical_project(im4, 1200)
@@ -55,6 +55,7 @@ def field_panorama():
     im7 = cylindrical_project(im7, 1200)
     im8 = cylindrical_project(im8, 1200)
     save_image(im1, "cylindrical_projection")
+    '''
 
     pan = panorama_image(im5, im6, thresh=2, iters=50000, inlier_thresh=3)
     save_image(pan, "field_panorama_1")

@@ -165,9 +165,9 @@ detect_and_draw_corners = lib.detect_and_draw_corners
 detect_and_draw_corners.argtypes = [IMAGE, c_float, c_float, c_int]
 detect_and_draw_corners.restype = None
 
-cylindrical_project = lib.cylindrical_project
+'''cylindrical_project = lib.cylindrical_project
 cylindrical_project.argtypes = [IMAGE, c_float]
-cylindrical_project.restype = IMAGE
+cylindrical_project.restype = IMAGE'''
 
 structure_matrix = lib.structure_matrix
 structure_matrix.argtypes = [IMAGE, c_float]

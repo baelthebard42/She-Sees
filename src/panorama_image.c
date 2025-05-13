@@ -138,7 +138,7 @@ float l1_distance(float *a, float *b, int n)
         l1_dist = a[i] - b[i];
 
         if (l1_dist < 0)
-            (-1) * l1_dist; // by definition of absolute values
+            l1_dist = (-1) * l1_dist; // by definition of absolute values
 
         l1_summed = l1_summed + l1_dist;
     }
@@ -193,12 +193,6 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
 
     int count = 0;
     int *seen = calloc(bn, sizeof(int));
-    // TODO: we want matches to be injective (one-to-one).
-    // Sort matches based on distance using match_compare and qsort.
-    // Then throw out matches to the same element in b. Use seen to keep track.
-    // Each point should only be a part of one match.
-    // Some points will not be in a match.
-    // In practice just bring good matches to front of list, set *mn.
 
     qsort(m, an, sizeof(match), match_compare);
 
@@ -424,15 +418,12 @@ image combine_images(image a, image b, matrix H)
     topleft.x = MIN(c1.x, MIN(c2.x, MIN(c3.x, c4.x)));
     topleft.y = MIN(c1.y, MIN(c2.y, MIN(c3.y, c4.y)));
 
-    // Find how big our new image should be and the offsets from image a.
     int dx = MIN(0, topleft.x);
     int dy = MIN(0, topleft.y);
     int w = MAX(a.w, botright.x) - dx;
     int h = MAX(a.h, botright.y) - dy;
 
-    // Can disable this if you are making very big panoramas.
-    // Usually this means there was an error in calculating H.
-    if (w > 7000 || h > 7000)
+    if (w > 7000 || h > 7000) // can disable this if making very big panoramas
     {
         fprintf(stderr, "output too big, stopping\n");
         return copy_image(a);
@@ -448,17 +439,30 @@ image combine_images(image a, image b, matrix H)
         {
             for (i = 0; i < a.w; ++i)
             {
-                // TODO: fill in.
+                set_pixel(c, i - dx, j - dy, k, get_pixel(a, i, j, k));
             }
         }
     }
 
-    // TODO: Paste in image b as well.
-    // You should loop over some points in the new image (which? all?)
-    // and see if their projection from a coordinates to b coordinates falls
-    // inside of the bounds of image b. If so, use bilinear interpolation to
-    // estimate the value of b at that projection, then fill in image c.
+    for (j = 0; j < c.h; ++j)
+    {
+        for (i = 0; i < c.w; ++i)
+        {
 
+            point p = make_point(i + dx, j + dy);
+
+            point pb = project_point(H, p);
+
+            if (pb.x >= 0 && pb.x < b.w - 1 && pb.y >= 0 && pb.y < b.h - 1)
+            {
+                for (k = 0; k < b.c; ++k)
+                {
+                    float val = bilinear_interpolate(b, pb.x, pb.y, k);
+                    set_pixel(c, i, j, k, val);
+                }
+            }
+        }
+    }
     return c;
 }
 
