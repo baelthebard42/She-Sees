@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, ctypes
 from ctypes import *
 import math
 import random
@@ -182,6 +182,13 @@ panorama_image_lib.argtypes = [IMAGE, IMAGE, c_float, c_float, c_int, c_float, c
 panorama_image_lib.restype = IMAGE
 
 def panorama_image(a, b, sigma=2, thresh=5, nms=3, inlier_thresh=2, iters=10000, cutoff=30):
+    #print(a.data is b.data)
+
+    print("Address stored in a.data:", ctypes.cast(a.data, ctypes.c_void_p).value)
+    print("Address stored in b.data:", ctypes.cast(b.data, ctypes.c_void_p).value)
+    print(f"a: {a} w={a.w}, h={a.h}, c={a.c}, data={a.data}")
+    print(f"b: {b} w={b.w}, h={b.h}, c={b.c}, data={b.data}")
+    print(panorama_image_lib)
     return panorama_image_lib(a, b, sigma, thresh, nms, inlier_thresh, iters, cutoff)
 
 if __name__ == "__main__":

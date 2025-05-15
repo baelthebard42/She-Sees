@@ -476,6 +476,11 @@ image combine_images(image a, image b, matrix H)
 // int cutoff: RANSAC inlier cutoff. Typical: 10-100
 image panorama_image(image a, image b, float sigma, float thresh, int nms, float inlier_thresh, int iters, int cutoff)
 {
+
+    printf("i have begun the panoroma");
+    assert(a.data != NULL);
+    assert(b.data != NULL);
+
     srand(10);
     int an = 0;
     int bn = 0;
@@ -485,8 +490,20 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
     descriptor *ad = harris_corner_detector(a, sigma, thresh, nms, &an);
     descriptor *bd = harris_corner_detector(b, sigma, thresh, nms, &bn);
 
+    if (!ad || !bd)
+    {
+        fprintf(stderr, "Descriptor generation failed.\n");
+        return make_image(1, 1, 1); // or appropriate error handling
+    }
+
     // Find matches
     match *m = match_descriptors(ad, an, bd, bn, &mn);
+
+    if (!m || mn == 0)
+    {
+        fprintf(stderr, "Descriptor matching failed.\n");
+        return make_image(1, 1, 1); // or appropriate error handling
+    }
 
     // Run RANSAC to find the homography
     matrix H = RANSAC(m, mn, inlier_thresh, iters, cutoff);

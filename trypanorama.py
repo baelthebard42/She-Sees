@@ -1,7 +1,7 @@
 from uwimg import *
 
 def draw_corners():
-    im = load_image("data/Rainier1.png")
+    im = load_image("data/helens4.jpg")
     detect_and_draw_corners(im, 2, 50, 3)
     save_image(im, "corners")
 
@@ -13,13 +13,14 @@ def draw_matches():
 
 def easy_panorama():
     im1 = load_image("data/Rainier1.png")
-    im2 = load_image("data/Rainier2.png")
+    im2 = load_image("data/Rainier3.png")
     pan = panorama_image(im1, im2, thresh=50)
     save_image(pan, "easy_panorama")
 
 def rainier_panorama():
     im1 = load_image("data/Rainier1.png")
     im2 = load_image("data/Rainier2.png")
+   # print(im1, im2)
     im3 = load_image("data/Rainier3.png")
     im4 = load_image("data/Rainier4.png")
     im5 = load_image("data/Rainier5.png")
@@ -68,9 +69,9 @@ def field_panorama():
     pan5 = panorama_image(pan4, im3, thresh=2, iters=50000, inlier_thresh=3)
     save_image(pan5, "field_panorama_5")
 
-draw_corners()
-draw_matches()
-easy_panorama()
-#rainier_panorama()
+#draw_corners()
+#draw_matches()
+#easy_panorama()
+rainier_panorama()
 #field_panorama()
 

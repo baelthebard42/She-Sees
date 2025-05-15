@@ -309,7 +309,17 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
     image S = structure_matrix(im, sigma); // done.
 
     image R = cornerness_response(S); // done. actually here we are supposed to calculate eigen values but we have settled with their approximations instead
-    save_image(R, "cornerness_raw_before_low_marked");
+
+    float max_cornerness = -INFINITY;
+    for (int i = 0; i < R.w * R.h; ++i)
+    {
+        if (R.data[i] != INVALID_CORNER && R.data[i] > max_cornerness)
+        {
+            max_cornerness = R.data[i];
+        }
+    }
+    printf("Max cornerness before thresholding: %f\n", max_cornerness);
+    thresh = 0.01 * max_cornerness;
 
     for (int i = 0; i < R.w; ++i)
     {
