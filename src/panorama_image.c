@@ -21,17 +21,6 @@ int match_compare(const void *a, const void *b)
         return 0;
 }
 
-// Helper function to create 2d points.
-// float x, y: coordinates of point.
-// returns: the point.
-point make_point(float x, float y)
-{
-    point p;
-    p.x = x;
-    p.y = y;
-    return p;
-}
-
 // Place two images side by side on canvas, for drawing matching pixels.
 // image a, b: images to place.
 // returns: image with both a and b side-by-side.

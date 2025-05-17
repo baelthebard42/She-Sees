@@ -9,7 +9,7 @@
 
 // you dont want to change this file
 
-static float gaussian(float x, float y, float sigma)
+float gaussian(float x, float y, float sigma)
 {
     return (1 / (TWOPI * sigma * sigma)) * exp(-((x * x + y * y) / (2 * (sigma * sigma))));
 }
@@ -48,6 +48,17 @@ typedef struct
     int ai, bi;
     float distance;
 } match;
+
+// Helper function to create 2d points.
+// float x, y: coordinates of point.
+// returns: the point.
+point make_point(float x, float y)
+{
+    point p;
+    p.x = x;
+    p.y = y;
+    return p;
+}
 
 // Basic operations
 float get_pixel(image im, int x, int y, int c);
