@@ -94,9 +94,9 @@ image make_integral_image(image im)
     return integ;
 }
 
-float get_sum_with_integral_image(image integ, point topLeft, point bottomRight, int c)
+float get_sum_with_integral_image(image integ, int topLeft_x, int topLeft_y, int bottomRight_x, int bottomRight_y, int c)
 {
-    return get_pixel(integ, bottomRight.x, bottomRight.y, c) - get_pixel(integ, topLeft.x - 1, bottomRight.y, c) - get_pixel(integ, bottomRight.x, topLeft.y - 1, c) + get_pixel(integ, topLeft.x - 1, topLeft.y - 1, c);
+    return get_pixel(integ, bottomRight_x, bottomRight_y, c) - get_pixel(integ, topLeft_x - 1, bottomRight_y, c) - get_pixel(integ, bottomRight_x, topLeft_y - 1, c) + get_pixel(integ, topLeft_x - 1, topLeft_y - 1, c);
 }
 
 // Apply a box filter to an image using an integral image for speed
@@ -121,7 +121,7 @@ image box_filter_image(image im, int s)
                 float bottomRight_x = i + s < im.w ? i + s : im.w - 1;
                 float bottomRight_y = j + s < im.h ? j + s : im.h - 1;
                 int area = (bottomRight_x - topLeft_x + 1) * (bottomRight_y - topLeft_y + 1);
-                float sum = get_sum_with_integral_image(integ, make_point(topLeft_x, topLeft_y), make_point(bottomRight_x, bottomRight_y), ch);
+                float sum = get_sum_with_integral_image(integ, topLeft_x, topLeft_y, bottomRight_x, bottomRight_y, ch);
                 sum = sum / area;
                 if (sum > 1)
                 {
@@ -322,7 +322,7 @@ void optical_flow_webcam(int smooth, int stride, int div)
 {
 #ifdef OPENCV
     void *cap;
-    // What video stream you open
+
     cap = open_video_stream(0, 1, 0, 0, 0);
     printf("%ld\n", cap);
     if (!cap)

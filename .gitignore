@@ -8,7 +8,7 @@ libuwimg*
 uwimg
 *.png
 *.jpg
-vs_code/
+.vscode/
 __pycache__/
 
 # OS Generated #

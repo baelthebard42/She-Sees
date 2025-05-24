@@ -3,7 +3,21 @@ from ctypes import *
 import math
 import random
 
-lib = CDLL(os.path.join(os.path.dirname(__file__), "libuwimg.so"), RTLD_GLOBAL)
+try:
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    os.add_dll_directory(os.path.join(current_dir, 'dlls'))
+    dll_path = os.path.join(current_dir, "libuwimg.dll")
+    print(f"Looking for DLL at: {dll_path}")
+    print(f"File exists: {os.path.exists(dll_path)}")
+    
+    
+    if not os.path.exists(dll_path):
+        raise FileNotFoundError(f"DLL not found at {dll_path}")
+    
+    lib = CDLL(dll_path, RTLD_GLOBAL)
+except Exception as e:
+    print(f"Failed to load library: {e}")
+    raise
 
 def c_array(ctype, values):
     arr = (ctype*len(values))()
@@ -181,6 +195,8 @@ panorama_image_lib = lib.panorama_image
 panorama_image_lib.argtypes = [IMAGE, IMAGE, c_float, c_float, c_int, c_float, c_int, c_int]
 panorama_image_lib.restype = IMAGE
 
+
+
 def panorama_image(a, b, sigma=2, thresh=5, nms=3, inlier_thresh=2, iters=10000, cutoff=30):
     #print(a.data is b.data)
 
@@ -190,6 +206,21 @@ def panorama_image(a, b, sigma=2, thresh=5, nms=3, inlier_thresh=2, iters=10000,
     print(f"b: {b} w={b.w}, h={b.h}, c={b.c}, data={b.data}")
     print(panorama_image_lib)
     return panorama_image_lib(a, b, sigma, thresh, nms, inlier_thresh, iters, cutoff)
+
+
+optical_flow_images = lib.optical_flow_images
+optical_flow_images.argtypes = [IMAGE, IMAGE, c_int, c_int]
+optical_flow_images.restype = IMAGE
+
+draw_flow = lib.draw_flow
+draw_flow.argtypes = [IMAGE, IMAGE, c_float]
+draw_flow.restype = None
+
+
+
+optical_flow_webcam = lib.optical_flow_webcam
+optical_flow_webcam.argtypes = [c_int, c_int, c_int]
+optical_flow_webcam.restype = None
 
 if __name__ == "__main__":
     im = load_image("data/dog.jpg")
