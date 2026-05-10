@@ -5,6 +5,15 @@
 #include <assert.h>
 #include "image.h"
 #include "matrix.h"
+#include "opencv_bridge.h"
+
+
+// Note: This implementation of Lucas-Kanade optical flow DOES NOT 
+// iterate over all local neighborhood pixel as explained by the equations
+// of optical flow constraints. It instead smooths the time structure matrix which
+// ensures the neighboring information is encoded in it already.
+// Then during the optical flow computation, the motion vector [u, v] is calculated only for
+// a representative pixel of the neighborhood (see velocity_image method)
 
 // Draws a line on an image with color corresponding to the direction of line
 // image im: image to draw line on
@@ -141,7 +150,7 @@ image box_filter_image(image im, int s)
 // image prev: the previous image in sequence.
 // int s: window size for smoothing.
 // returns: structure matrix. 1st channel is Ix^2, 2nd channel is Iy^2,
-//          3rd channel is IxIy, 4th channel is IxIt, 5th channel is IyIt.
+//          3rd channel is IxIy, 4th channel is IxIt, 5th channel is IyIt. (I here represents image gradient not image intensity.)
 image time_structure_matrix(image im, image prev, int s)
 {
     int i;
@@ -157,11 +166,11 @@ image time_structure_matrix(image im, image prev, int s)
 
     float temp;
     image S = make_image(im.w, im.h, 5);
-    image sobel_x_filter = make_gx_filter();
+    image sobel_x_filter = make_gx_filter(); //essential in calculating the image gradients
     image sobel_y_filter = make_gy_filter();
 
-    image intensity_x = convolve_image(im, sobel_x_filter, 1);
-    image intensity_y = convolve_image(im, sobel_y_filter, 1);
+    image intensity_x_grads = convolve_image(im, sobel_x_filter, 1);
+    image intensity_y_grads = convolve_image(im, sobel_y_filter, 1);
 
     for (int i = 0; i < S.w; ++i)
     {
@@ -172,25 +181,25 @@ image time_structure_matrix(image im, image prev, int s)
 
                 if (ch == 0)
                 {
-                    temp = get_pixel(intensity_x, i, j, 0) * get_pixel(intensity_x, i, j, 0);
+                    temp = get_pixel(intensity_x_grads, i, j, 0) * get_pixel(intensity_x_grads, i, j, 0);
                 }
                 else if (ch == 1)
                 {
-                    temp = get_pixel(intensity_y, i, j, 0) * get_pixel(intensity_y, i, j, 0);
+                    temp = get_pixel(intensity_y_grads, i, j, 0) * get_pixel(intensity_y_grads, i, j, 0);
                 }
 
                 else if (ch == 2)
                 {
-                    temp = get_pixel(intensity_x, i, j, 0) * get_pixel(intensity_y, i, j, 0);
+                    temp = get_pixel(intensity_x_grads, i, j, 0) * get_pixel(intensity_y_grads, i, j, 0);
                 }
 
                 else if (ch == 3)
                 {
-                    temp = get_pixel(intensity_x, i, j, 0) * get_pixel(time_gradients, i, j, 0);
+                    temp = get_pixel(intensity_x_grads, i, j, 0) * get_pixel(time_gradients, i, j, 0);
                 }
                 else
                 {
-                    temp = get_pixel(intensity_y, i, j, 0) * get_pixel(time_gradients, i, j, 0);
+                    temp = get_pixel(intensity_y_grads, i, j, 0) * get_pixel(time_gradients, i, j, 0);
                 }
 
                 set_pixel(S, i, j, ch, temp);
@@ -206,19 +215,23 @@ image time_structure_matrix(image im, image prev, int s)
 
     float sigma = s / 6; // rule of thumb
 
-    S = smooth_image(S, sigma, 1);
+    S = smooth_image(S, sigma, 1); // each pixel gets info from neighboring pixels, useful for optical flow computation later
     return S;
 }
 
 // Calculate the velocity given a structure image
-// image S: time-structure image
-// int stride:
+// image S: time-structure image (smoothed)
+// int stride: motion vector or velocity is computed every stride pixels (not each pixel)
 image velocity_image(image S, int stride)
 {
     image v = make_image(3, S.h / stride, S.w / stride);
     int i, j;
-    matrix M = make_matrix(2, 2);
-    matrix p = make_matrix(2, 1);
+    matrix M = make_matrix(2, 2); // structure tensor or second moment matrix that encodes local grad geometry
+    matrix p = make_matrix(2, 1); // time grad matrix for Ixt and Iyt
+
+    // the intuition is to solve for vx, vy using information encoded in M and p
+    // starting from (stride-1)/2 instead of 0 since it gives centre of the stride pixels. then each iteration gives centre of next block and so on
+    // the computation occurs just for that representative pixel, not others
     for (j = (stride - 1) / 2; j < S.h; j += stride)
     {
         for (i = (stride - 1) / 2; i < S.w; i += stride)
@@ -314,49 +327,100 @@ image optical_flow_images(image im, image prev, int smooth, int stride)
     return vs;
 }
 
+
 // Run optical flow demo on webcam
-// int smooth: amount to smooth structure matrix by
-// int stride: downsampling for velocity matrix
-// int div: downsampling factor for images from webcam
+// smooth: structure matrix smoothing
+// stride: velocity sampling stride
+// div: downsampling factor
 void optical_flow_webcam(int smooth, int stride, int div)
 {
 #ifdef OPENCV
-    void *cap;
 
-    cap = open_video_stream(0, 1, 0, 0, 0);
-    printf("%ld\n", cap);
+    void *cap = open_video_stream(0);
+
     if (!cap)
     {
-        fprintf(stderr, "couldn't open\n");
-        exit(0);
+        fprintf(stderr, "Failed to open camera\n");
+        return;
     }
-    image prev = get_image_from_stream(cap);
-    printf("%d %d\n", prev.w, prev.h);
-    image prev_c = nn_resize(prev, prev.h / div, prev.w / div);
-    image im = get_image_from_stream(cap);
-    image im_c = nn_resize(im, im.h / div, im.w / div);
-    while (im.data)
+
+    image prev = {0};
+    image im = {0};
+
+    // Wait for first valid frame
+    while (!prev.data)
     {
+        prev = get_image_from_stream(cap);
+
+        if (!prev.data)
+        {
+            printf("Waiting for camera frame...\n");
+        }
+    }
+
+    image prev_c = nn_resize(prev, prev.w/div, prev.h/div);
+
+    // Wait for second valid frame
+    while (!im.data)
+    {
+        im = get_image_from_stream(cap);
+
+        if (!im.data)
+        {
+            printf("Waiting for second frame...\n");
+        }
+    }
+
+    image im_c = nn_resize(im, im.w/div, im.h/div);
+
+    while (1)
+    {
+        // Skip invalid frames instead of crashing
+        if (!im.data)
+        {
+            im = get_image_from_stream(cap);
+            continue;
+        }
+
         image copy = copy_image(im);
+
         image v = optical_flow_images(im_c, prev_c, smooth, stride);
-        draw_flow(copy, v, smooth * div * 2);
+
+        draw_flow(copy, v, smooth * div);
+
         int key = show_image(copy, "flow", 5);
+
         free_image(v);
         free_image(copy);
+
         free_image(prev);
         free_image(prev_c);
+
         prev = im;
         prev_c = im_c;
-        if (key != -1)
+
+        if (key == 27)
         {
-            key = key % 256;
-            printf("%d\n", key);
-            if (key == 27)
-                break;
+            break;
         }
-        im = get_image_from_stream(cap);
-        im_c = nn_resize(im, im.h / div, im.w / div);
+
+        // Keep trying until a valid frame appears
+        do
+        {
+            im = get_image_from_stream(cap);
+
+            if (!im.data)
+            {
+                printf("Dropped frame... retrying\n");
+            }
+
+        } while (!im.data);
+
+        im_c = nn_resize(im, im.w/div, im.h/div);
     }
+
+    close_video_stream(cap);
+
 #else
     fprintf(stderr, "Must compile with OpenCV\n");
 #endif

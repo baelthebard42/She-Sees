@@ -3,21 +3,8 @@ from ctypes import *
 import math
 import random
 
-try:
-    current_dir = os.path.abspath(os.path.dirname(__file__))
-    os.add_dll_directory(os.path.join(current_dir, 'dlls'))
-    dll_path = os.path.join(current_dir, "libuwimg.dll")
-    print(f"Looking for DLL at: {dll_path}")
-    print(f"File exists: {os.path.exists(dll_path)}")
-    
-    
-    if not os.path.exists(dll_path):
-        raise FileNotFoundError(f"DLL not found at {dll_path}")
-    
-    lib = CDLL(dll_path, RTLD_GLOBAL)
-except Exception as e:
-    print(f"Failed to load library: {e}")
-    raise
+
+lib = CDLL(os.path.join(os.path.dirname(__file__), "libuwimg.so"), RTLD_GLOBAL)
 
 def c_array(ctype, values):
     arr = (ctype*len(values))()

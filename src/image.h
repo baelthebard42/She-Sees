@@ -118,12 +118,7 @@ extern "C"
     void optical_flow_webcam(int smooth, int stride, int div);
     void draw_flow(image im, image v, float scale);
 
-#ifdef OPENCV
-    void *open_video_stream(const char *f, int c, int h, int w, int fps);
-    image get_image_from_stream(void *p);
-    void make_window(char *name, int h, int w, int fullscreen);
-    int show_image(image im, const char *name, int ms);
-#endif
+
 
 #ifdef __cplusplus
 }
