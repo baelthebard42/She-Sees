@@ -68,9 +68,9 @@ void draw_line(image im, float y, float x, float dy, float dx)
     {
         int xi = x + dx * i / d;
         int yi = y + dy * i / d;
-        set_pixel(im, 0, yi, xi, r);
-        set_pixel(im, 1, yi, xi, g);
-        set_pixel(im, 2, yi, xi, b);
+        set_pixel(im, xi, yi, 0, r);
+        set_pixel(im, xi, yi, 1, g);
+        set_pixel(im, xi, yi, 2, b);
     }
 }
 
@@ -79,7 +79,7 @@ void draw_line(image im, float y, float x, float dy, float dx)
 // returns: image I such that I[x,y] = sum{i<=x, j<=y}(im[i,j])
 image make_integral_image(image im)
 {
-    image integ = make_image(im.c, im.h, im.w);
+    image integ = make_image(im.w, im.h, im.c);
 
     for (int i = 0; i < integ.w; ++i)
     {
@@ -224,7 +224,7 @@ image time_structure_matrix(image im, image prev, int s)
 // int stride: motion vector or velocity is computed every stride pixels (not each pixel)
 image velocity_image(image S, int stride)
 {
-    image v = make_image(3, S.h / stride, S.w / stride);
+    image v = make_image(S.w / stride, S.h / stride, 3);
     int i, j;
     matrix M = make_matrix(2, 2); // structure tensor or second moment matrix that encodes local grad geometry
     matrix p = make_matrix(2, 1); // time grad matrix for Ixt and Iyt
@@ -259,16 +259,21 @@ image velocity_image(image S, int stride)
             p.data[0][0] = -Ixt;
             p.data[1][0] = -Iyt;
 
-            matrix solution = matrix_mult_matrix(matrix_invert(M), p);
+            matrix Minv = matrix_invert(M);
+            matrix solution = matrix_mult_matrix(Minv, p);
 
             float vx = solution.data[0][0];
             float vy = solution.data[1][0];
 
-            set_pixel(v, 0, j / stride, i / stride, vx);
-            set_pixel(v, 1, j / stride, i / stride, vy);
+            free_matrix(Minv);
+            free_matrix(solution);
+
+            set_pixel(v, i / stride, j / stride, 0, vx);
+            set_pixel(v, i / stride, j / stride, 1, vy);
         }
     }
     free_matrix(M);
+    free_matrix(p);
     return v;
 }
 
@@ -284,8 +289,8 @@ void draw_flow(image im, image v, float scale)
     {
         for (i = (stride - 1) / 2; i < im.w; i += stride)
         {
-            float dx = scale * get_pixel(v, 0, j / stride, i / stride);
-            float dy = scale * get_pixel(v, 1, j / stride, i / stride);
+            float dx = scale * get_pixel(v, i/stride, j/stride, 0);
+            float dy = scale * get_pixel(v, i/stride, j/stride, 1);
             if (fabs(dx) > im.w)
                 dx = 0;
             if (fabs(dy) > im.h)
@@ -358,7 +363,13 @@ void optical_flow_webcam(int smooth, int stride, int div)
         }
     }
 
-    image prev_c = nn_resize(prev, prev.w/div, prev.h/div);
+    int rw = prev.w / div;
+    int rh = prev.h / div;
+
+    if (rw < 1) rw = 1;
+    if (rh < 1) rh = 1;
+
+    image prev_c = nn_resize(prev, rw, rh);
 
     // Wait for second valid frame
     while (!im.data)
@@ -371,7 +382,15 @@ void optical_flow_webcam(int smooth, int stride, int div)
         }
     }
 
-    image im_c = nn_resize(im, im.w/div, im.h/div);
+     rw = im.w / div;
+     rh = im.h / div;
+
+    if (rw < 1) rw = 1;
+    if (rh < 1) rh = 1;
+
+  
+
+    image im_c = nn_resize(im, rw, rh);
 
     while (1)
     {
