@@ -461,18 +461,20 @@ image combine_images(image a, image b, matrix H)
 
 // Create a panoramam between two images.
 // image a, b: images to stitch together.
+// int save_intermediate: (1 or 0), if 1 saves an intermediate image showing how the algorithm stitched togetehr images
 // float sigma: gaussian for harris corner detector. Typical: 2
 // float thresh: threshold for corner/no corner. Typical: 1-5
 // int nms: window to perform nms on. Typical: 3
 // float inlier_thresh: threshold for RANSAC inliers. Typical: 2-5
 // int iters: number of RANSAC iterations. Typical: 1,000-50,000
 // int cutoff: RANSAC inlier cutoff. Typical: 10-100
-image panorama_image(image a, image b, float sigma, float thresh, int nms, float inlier_thresh, int iters, int cutoff)
+image panorama_image(image a, image b, int save_intermediate, float sigma, float thresh, int nms, float inlier_thresh, int iters, int cutoff)
 {
 
     printf("i have begun the panoroma");
     assert(a.data != NULL);
     assert(b.data != NULL);
+    assert(save_intermediate==1 || save_intermediate==0);
 
     srand(10);
     int an = 0;
@@ -501,7 +503,7 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms, float
     // Run RANSAC to find the homography
     matrix H = RANSAC(m, mn, inlier_thresh, iters, cutoff);
 
-    if (1)
+    if (save_intermediate)
     {
         // Mark corners and matches between images
         mark_corners(a, ad, an);

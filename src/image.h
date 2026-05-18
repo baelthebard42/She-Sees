@@ -56,7 +56,7 @@ extern "C"
     void set_pixel(image im, int x, int y, int c, float v);
     image copy_image(image im);
     image rgb_to_grayscale(image im);
-    image grayscale_to_rgb(image im, float r, float g, float b);
+ 
     void rgb_to_hsv(image im);
     void hsv_to_rgb(image im);
     void shift_image(image im, int c, float v);
@@ -91,7 +91,6 @@ extern "C"
     image make_gy_filter();
     void feature_normalize(image im);
     void l1_normalize(image im);
-    void threshold_image(image im, float thresh);
     image *sobel_image(image im);
     image colorize_sobel(image im);
     image smooth_image(image im, float sigma, int use_1d_gauss);
@@ -107,7 +106,7 @@ extern "C"
     image combine_images(image a, image b, matrix H);
     match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn);
     descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms, int *n);
-    image panorama_image(image a, image b, float sigma, float thresh, int nms, float inlier_thresh, int iters, int cutoff);
+    image panorama_image(image a, image b, int save_intermediate, float sigma, float thresh, int nms, float inlier_thresh, int iters, int cutoff);
 
     // optical flow
     image make_integral_image(image im);
