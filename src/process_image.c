@@ -11,6 +11,8 @@ float RGB_WEIGHTS[3] = {0.299, 0.587, 0.114};
 
 float get_pixel(image im, int x, int y, int c)
 {
+
+    // simple clipping to ensure pixel fetching doesn't crash for edge values
     x = (x < 0) ? 0 : (x >= im.w) ? im.w - 1
                                   : x;
     y = (y < 0) ? 0 : (y >= im.h) ? im.h - 1

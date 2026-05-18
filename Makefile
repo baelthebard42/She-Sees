@@ -3,7 +3,7 @@ OPENMP=0
 DEBUG=0
 
 # -------------------- FILES --------------------
-OBJ=load_image.o process_image.o args.o filter_image.o resize_image.o test.o harris_image.o matrix.o panorama_image.o flow_image.o
+OBJ=load_image.o process_image.o args.o filter_image.o resize_image.o harris_image.o matrix.o panorama_image.o flow_image.o
 EXOBJ=main.o
 OPENCV_OBJ=opencv_bridge.o
 

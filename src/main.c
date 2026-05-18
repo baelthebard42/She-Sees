@@ -3,16 +3,22 @@
 
 int main()
 {
-    
-//  image a = load_image("data/dog_a.jpg");
-// image b = load_image("data/dog_b.jpg");;
-// image flow = optical_flow_images(b, a, 15, 8);
-// draw_flow(a, flow, 8);
-// save_image(a, "lines");
+    // Load original image
+    image original = load_image("./data/sagarmatha.jpg");
 
-optical_flow_webcam(15, 4, 8);
+    image corners_drawn = detect_and_draw_corners(original, 2, 50, 3 );
+    save_image(corners_drawn, "sagarmatha_with_corners");
 
-    
-    
-    return 0;
+    image sa = load_image("./data/sagarmatha_a.png");
+    image sb = load_image("./data/sagarmatha_b.png");
+
+    image pano = panorama_image(sa, sb, 2, 5, 3, 3, 50000, 90);
+
+    save_image(pano, "sagarmatha_panoroma");
+
+
+
+
+
+
 }

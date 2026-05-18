@@ -325,9 +325,12 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
     {
         for (int j = 0; j < R.h; ++j)
         {
+          
             float val = get_pixel(R, i, j, 0);
+      
             if (val < thresh)
             {
+            
                 set_pixel(R, i, j, 0, INVALID_CORNER);
             }
         }
@@ -349,6 +352,8 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
         {
             if (get_pixel(Rnms, i, j, 0) != INVALID_CORNER)
             {
+
+
                 d[idx_desc++] = describe_index(im, j * Rnms.w + i);
             }
         }
@@ -365,9 +370,11 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
 // float sigma: std. dev for harris.
 // float thresh: threshold for cornerness.
 // int nms: distance to look for local-maxes in response map.
-void detect_and_draw_corners(image im, float sigma, float thresh, int nms)
+image detect_and_draw_corners(image im, float sigma, float thresh, int nms)
 {
     int n = 0;
     descriptor *d = harris_corner_detector(im, sigma, thresh, nms, &n);
     mark_corners(im, d, n);
+    return im;
+
 }

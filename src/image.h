@@ -76,9 +76,9 @@ extern "C"
 
     // resizing
     float nn_interpolate(image im, float x, float y, int c);
-    image nn_resize(image im, int w, int h);
+    image nn_resize(image im, int w, int h, int use_box_filter);
     float bilinear_interpolate(image im, float x, float y, int c);
-    image bilinear_resize(image im, int w, int h);
+    image bilinear_resize(image im, int w, int h, int use_box_filter);
 
     // filtering
     image convolve_image(image im, image filter, int preserve);
@@ -102,7 +102,7 @@ extern "C"
     void free_descriptors(descriptor *d, int n);
     void mark_corners(image im, descriptor *d, int n);
     image find_and_draw_matches(image a, image b, float sigma, float thresh, int nms);
-    void detect_and_draw_corners(image im, float sigma, float thresh, int nms);
+    image detect_and_draw_corners(image im, float sigma, float thresh, int nms);
     int model_inliers(matrix H, match *m, int n, float thresh);
     image combine_images(image a, image b, matrix H);
     match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn);

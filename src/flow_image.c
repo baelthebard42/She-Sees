@@ -369,7 +369,7 @@ void optical_flow_webcam(int smooth, int stride, int div)
     if (rw < 1) rw = 1;
     if (rh < 1) rh = 1;
 
-    image prev_c = nn_resize(prev, rw, rh);
+    image prev_c = nn_resize(prev, rw, rh, 0);
 
     // Wait for second valid frame
     while (!im.data)
@@ -390,7 +390,7 @@ void optical_flow_webcam(int smooth, int stride, int div)
 
   
 
-    image im_c = nn_resize(im, rw, rh);
+    image im_c = nn_resize(im, rw, rh, 0);
 
     while (1)
     {
@@ -435,7 +435,7 @@ void optical_flow_webcam(int smooth, int stride, int div)
 
         } while (!im.data);
 
-        im_c = nn_resize(im, im.w/div, im.h/div);
+        im_c = nn_resize(im, im.w/div, im.h/div, 0);
     }
 
     close_video_stream(cap);

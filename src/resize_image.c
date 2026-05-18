@@ -67,10 +67,16 @@ float bilinear_interpolate(image im, float x, float y, int c)
     return result_pixel;
 }
 
-image bilinear_resize(image im, int w, int h)
+image bilinear_resize(image im, int w, int h, int use_box_filter)
 {
 
     assert(w > 0 && h > 0);
+    assert(use_box_filter==1 || use_box_filter==0);
+
+    if (use_box_filter){
+        image box_filter = make_box_filter(7);
+        im = convolve_image(im, box_filter, 1);
+    }
 
     image resized_image = make_image(w, h, im.c);
 
@@ -98,13 +104,21 @@ image bilinear_resize(image im, int w, int h)
         }
     }
 
+  
+
     return resized_image;
 }
 
-image nn_resize(image im, int w, int h)
+image nn_resize(image im, int w, int h, int use_box_filter)
 {
 
     assert(w > 0 && h > 0);
+    assert(use_box_filter==1 || use_box_filter==0);
+
+     if (use_box_filter){
+        image box_filter = make_box_filter(7);
+        im = convolve_image(im, box_filter, 1);
+    }
 
     image resized_image = make_image(w, h, im.c);
 
@@ -131,6 +145,8 @@ image nn_resize(image im, int w, int h)
             }
         }
     }
+
+   
 
     return resized_image;
 }

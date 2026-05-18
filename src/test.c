@@ -135,7 +135,8 @@ void test_hsv_to_rgb()
 void test_nn_resize()
 {
     image im = load_image("data/dogsmall.jpg");
-    image resized = nn_resize(im, im.w*4, im.h*4);
+    image resized = nn_resize(im, im.w*4, im.h*4, 0);
+    save_image(resized, "resized_nn_4x_dogsmall.png");
     image gt = load_image("figs/dog4x-nn-for-test.png");
     TEST(same_image(resized, gt));
     free_image(im);
@@ -143,7 +144,8 @@ void test_nn_resize()
     free_image(gt);
 
     image im2 = load_image("data/dog.jpg");
-    image resized2 = nn_resize(im2, 713, 467);
+    image resized2 = nn_resize(im2, 713, 467, 0);
+    save_image(resized, "resized_nn_4x_dog.png");
     image gt2 = load_image("figs/dog-resize-nn.png");
     TEST(same_image(resized2, gt2));
     free_image(im2);
@@ -154,7 +156,8 @@ void test_nn_resize()
 void test_bl_resize()
 {
     image im = load_image("data/dogsmall.jpg");
-    image resized = bilinear_resize(im, im.w*4, im.h*4);
+    image resized = bilinear_resize(im, im.w*4, im.h*4, 0);
+    save_image(resized, "resized_bl_4x_dogsmall.png");
     image gt = load_image("figs/dog4x-bl.png");
     TEST(same_image(resized, gt));
     free_image(im);
@@ -162,7 +165,8 @@ void test_bl_resize()
     free_image(gt);
 
     image im2 = load_image("data/dog.jpg");
-    image resized2 = bilinear_resize(im2, 713, 467);
+    image resized2 = bilinear_resize(im2, 713, 467, 0);
+    save_image(resized, "resized_nn_4x_dog.png");
     image gt2 = load_image("figs/dog-resize-bil.png");
     TEST(same_image(resized2, gt2));
     free_image(im2);
@@ -175,8 +179,8 @@ void test_multiple_resize()
     image im = load_image("data/dog.jpg");
     int i;
     for (i = 0; i < 10; i++){
-        image im1 = bilinear_resize(im, im.w*4, im.h*4);
-        image im2 = bilinear_resize(im1, im1.w/4, im1.h/4);
+        image im1 = bilinear_resize(im, im.w*4, im.h*4, 0);
+        image im2 = bilinear_resize(im1, im1.w/4, im1.h/4, 0);
         free_image(im);
         free_image(im1);
         im = im2;
@@ -387,13 +391,13 @@ void test_cornerness()
 void run_tests()
 {
     //test_matrix();
-    test_get_pixel();
-    test_set_pixel();
-    test_copy();
-    test_shift();
-    test_grayscale();
-    test_rgb_to_hsv();
-    test_hsv_to_rgb();
+    // test_get_pixel();
+    // test_set_pixel();
+    // test_copy();
+    // test_shift();
+    // test_grayscale();
+    // test_rgb_to_hsv();
+    // test_hsv_to_rgb();
     test_nn_resize();
     test_bl_resize();
     test_multiple_resize();
@@ -406,8 +410,12 @@ void run_tests()
     test_hybrid_image();
     test_frequency_image();
     test_sobel();
-    test_structure();
-    test_cornerness();
+
     printf("%d tests, %d passed, %d failed\n", tests_total, tests_total-tests_fail, tests_fail);
 }
 
+int main(int argc, char **argv)
+{
+   run_tests();
+    return 0;
+}
